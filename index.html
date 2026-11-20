@@ -49,7 +49,7 @@
       <div class="stat"><small>Chrono</small><strong id="time">00:00.0</strong></div>
       <div class="stat"><small>Record</small><strong id="best">—</strong></div>
     </div>
-    <p class="help"><b>Conduire :</b> ↑ / W accélérer · ↓ / S freiner · ← → / A D tourner<br>R pour recommencer. Reste sur la route pour garder ta vitesse !</p>
+    <p class="help"><b>Conduire :</b> ↑ / W accélérer · ↓ / S freiner · ← → / A D tourner<br>R pour recommencer. La voiture reste orientée vers le nord et la caméra la suit !</p>
   </section>
   <div class="mobile" aria-label="Commandes tactiles">
     <button data-key="ArrowLeft" aria-label="Tourner à gauche">◀</button>
@@ -74,7 +74,7 @@
     loop: { name: 'Looping', color: '#525d9a', road: '#303444', w: 920, h: 720, width: 150,
       point: t => ({ x: 720 * Math.cos(t) + 95 * Math.cos(5*t), y: 510 * Math.sin(t) - 115 * Math.sin(3*t) }) }
   };
-  let track, car, lastTime = 0, elapsed = 0, lap = 1, lastProgress = 0, toastTimer;
+  let track, car, cameraAngle = -Math.PI / 2, lastTime = 0, elapsed = 0, lap = 1, lastProgress = 0, toastTimer;
   let bests = {};
   try { bests = JSON.parse(localStorage.getItem('virage-bests') || '{}'); } catch (_) {}
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -87,6 +87,7 @@
   }
   function reset() {
     track = makeTrack(mapPicker.value); car = { ...track.pts[0], angle: Math.atan2(track.pts[1].y-track.pts[0].y, track.pts[1].x-track.pts[0].x), speed: 0 };
+    cameraAngle = -Math.PI / 2;
     elapsed = 0; lap = 1; lastProgress = 0; lastTime = performance.now();
     document.querySelector('#lap').textContent = lap; updateBest();
     showToast(`${track.name} : c'est parti !`);
@@ -96,7 +97,6 @@
   function showToast(text) { const el=document.querySelector('#toast'); el.textContent=text; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1800); }
   function nearest() {
     let best=Infinity, index=0;
-    // Coarse sampling keeps the game smooth, even on mobile.
     for (let i=0;i<SEGMENTS;i+=3) { const p=track.pts[i], dx=p.x-car.x, dy=p.y-car.y, d=dx*dx+dy*dy; if(d<best){best=d;index=i;} }
     return { index, distance: Math.sqrt(best) };
   }
@@ -117,11 +117,18 @@
     car.x += Math.cos(car.angle)*car.speed*dt;
     car.y += Math.sin(car.angle)*car.speed*dt;
     if(!onRoad && near.distance>track.width*.95) { car.speed*=.965; }
+
+    // Rotate the view smoothly so the car always points toward the top of the screen.
+    const cameraTarget = -car.angle - Math.PI / 2;
+    let cameraDelta = cameraTarget - cameraAngle;
+    while (cameraDelta > Math.PI) cameraDelta -= TAU;
+    while (cameraDelta < -Math.PI) cameraDelta += TAU;
+    cameraAngle += cameraDelta * Math.min(1, dt * 5);
+
     const next=nearest().index/SEGMENTS;
     let delta=next-lastProgress;
     if(delta < -0.5) delta += 1;
     if(delta > 0.5) delta -= 1;
-    // Only count forward crossings, preventing reverse driving from completing laps.
     if(delta > 0 && lastProgress > .88 && next < .12 && car.speed>30) {
       lap++;
       if(lap>3) {
@@ -141,9 +148,11 @@
     const W=innerWidth,H=innerHeight;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=track.color; ctx.fillRect(0,0,W,H);
-    const camX=car.x, camY=car.y;
-    ctx.save(); ctx.translate(W/2-camX,H/2-camY);
-    // Soft terrain details
+    ctx.save();
+    ctx.translate(W/2,H/2);
+    ctx.rotate(cameraAngle);
+    ctx.translate(-car.x,-car.y);
+
     ctx.globalAlpha=.13; ctx.fillStyle='#fff';
     for(let i=0;i<95;i++){ const x=((i*317+83)%(track.w*2))-track.w, y=((i*197+47)%(track.h*2))-track.h; ctx.beginPath();ctx.arc(x,y,(i%3)+2,0,TAU);ctx.fill(); }
     ctx.globalAlpha=1;
@@ -151,11 +160,11 @@
     path(); ctx.lineWidth=track.width+24;ctx.strokeStyle='#e7d8b7';ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
     path(); ctx.lineWidth=track.width;ctx.strokeStyle=track.road;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
     path(); ctx.setLineDash([22,22]);ctx.lineWidth=3;ctx.strokeStyle='#ffffff55';ctx.stroke();ctx.setLineDash([]);
-    // Start/finish stripe
+
     const p0=track.pts[0], p1=track.pts[1], a=Math.atan2(p1.y-p0.y,p1.x-p0.x);
     ctx.save();ctx.translate(p0.x,p0.y);ctx.rotate(a+Math.PI/2);
     for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#20252b':'#f6f7f8';ctx.fillRect(-track.width/2+i*track.width/8,-9,track.width/8+1,18);}ctx.restore();
-    // Car shadow and body
+
     ctx.save();ctx.translate(car.x,car.y);ctx.rotate(car.angle);
     ctx.fillStyle='#0007';ctx.beginPath();ctx.roundRect(-27,-13,58,32,8);ctx.fill();
     ctx.fillStyle='#ff5d5d';ctx.beginPath();ctx.roundRect(-30,-16,60,32,8);ctx.fill();
@@ -163,7 +172,7 @@
     ctx.fillStyle='#263a4d';ctx.beginPath();ctx.roundRect(-13,-12,23,24,5);ctx.fill();
     ctx.fillStyle='#91d8ef';ctx.fillRect(-10,-10,8,20);ctx.restore();
     ctx.restore();
-    // Mini-map
+
     const mw=Math.min(170,W*.29), mh=mw*.68, mx=W-mw-20, my=20;
     ctx.fillStyle='#101923d9';ctx.beginPath();ctx.roundRect(mx,my,mw,mh,12);ctx.fill();
     const sx=(mw-20)/(track.w*2.35), sy=(mh-20)/(track.h*2.35), scale=Math.min(sx,sy);
