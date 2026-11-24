@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10151e">
+  <title>VIRAGE — multijoueur local</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow: hidden; background: #10151e; color: #f5f7fb; font-family: system-ui, sans-serif; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    .panel { position: fixed; z-index: 2; top: 18px; left: 18px; width: min(330px, calc(100vw - 36px)); padding: 18px; border: 1px solid #ffffff22; border-radius: 16px; background: #111923e8; backdrop-filter: blur(12px); }
+    h1 { margin: 0 0 4px; font-size: 24px; } p { margin: 0 0 12px; color: #aeb9c7; font-size: 12px; line-height: 1.5; }
+    input, button { width: 100%; min-height: 40px; margin-top: 8px; padding: 0 11px; border: 1px solid #ffffff24; border-radius: 9px; background: #202b38; color: #f5f7fb; font: inherit; }
+    button { border: 0; background: #70e6ae; color: #102017; font-weight: 800; cursor: pointer; }
+    button.secondary { background: #334154; color: white; }
+    #status { min-height: 20px; margin: 10px 0 0; color: #88f0c2; font-size: 12px; }
+    #players { margin: 8px 0 0; padding: 0; list-style: none; font-size: 12px; }
+    #players li { margin-top: 5px; }
+    .top { position: fixed; top: 18px; right: 18px; z-index: 1; padding: 10px 13px; border-radius: 12px; background: #111923e8; font-size: 13px; }
+    .mobile { display:none; position:fixed; z-index:3; right:15px; bottom:15px; gap:7px; }
+    .mobile button { width:55px; height:55px; margin:0; padding:0; border:1px solid #ffffff33; border-radius:14px; background:#111923dd; color:white; font-size:20px; touch-action:none; }
+    @media(max-width:600px){.panel{top:10px;left:10px;width:210px;padding:12px}.panel p{font-size:10px}.panel h1{font-size:20px}.top{top:10px;right:10px}.mobile{display:flex}}
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="Course multijoueur"></canvas>
+  <section class="panel">
+    <h1>VIRAGE <span style="color:#70e6ae">EN LIGNE</span></h1>
+    <p>Crée un salon et partage son code, ou rejoins le salon d’un ami. Jusqu’à 8 joueurs.</p>
+    <input id="name" maxlength="18" placeholder="Ton nom de pilote" aria-label="Nom de pilote">
+    <input id="room" maxlength="8" placeholder="Code du salon (ex. COURSE1)" aria-label="Code du salon">
+    <button id="create">Créer un salon</button>
+    <button class="secondary" id="join">Rejoindre ce salon</button>
+    <div id="status" role="status">Connexion au serveur…</div>
+    <ul id="players"></ul>
+  </section>
+  <div class="top">Vitesse : <strong id="speed">0</strong> km/h · ↑ accélérer · ← → tourner</div>
+  <div class="mobile" aria-label="Commandes tactiles">
+    <button data-key="ArrowLeft" aria-label="Tourner à gauche">◀</button>
+    <button data-key="ArrowUp" aria-label="Accélérer">▲</button>
+    <button data-key="ArrowDown" aria-label="Freiner">▼</button>
+    <button data-key="ArrowRight" aria-label="Tourner à droite">▶</button>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+  (() => {
+    const canvas = document.querySelector('#game'), ctx = canvas.getContext('2d');
+    const keys = Object.create(null), TAU = Math.PI * 2;
+    const socket = io();
+    const players = new Map();
+    let car = { x: 0, y: 0, angle: -Math.PI / 2, speed: 0 };
+    let joined = false, lastSend = 0, lastFrame = performance.now();
+    const track = Array.from({length: 900}, (_, i) => {
+      const t = i * TAU / 900;
+      return { x: 900*Math.cos(t)+115*Math.cos(3*t), y: 540*Math.sin(t)-65*Math.sin(2*t) };
+    });
+    function resize() { const dpr=Math.min(devicePixelRatio||1,2);canvas.width=innerWidth*dpr;canvas.height=innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0); }
+    addEventListener('resize',resize);resize();
+    function status(text, error=false){const el=document.querySelector('#status');el.textContent=text;el.style.color=error?'#ff8b8b':'#88f0c2';}
+    socket.on('connect',()=>status('Serveur connecté. Crée ou rejoins un salon.'));
+    socket.on('connect_error',()=>status('Serveur local introuvable. Lance npm start.',true));
+    socket.on('room:players',list=>{players.clear();list.forEach(p=>players.set(p.id,p));document.querySelector('#players').innerHTML=list.map(p=>`<li style="color:${p.color}">● ${escapeHtml(p.name)}${p.id===socket.id?' (toi)':''}</li>`).join('');});
+    socket.on('car:remote',p=>{const old=players.get(p.id)||{};players.set(p.id,{...old,...p});});
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    function enterRoom(code){const room=code.trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);if(!room){status('Choisis un code de salon.',true);return;}socket.emit('room:join',{room,name:document.querySelector('#name').value.trim()||'Pilote'},result=>{if(!result?.ok){status(result?.error||'Impossible de rejoindre.',true);return;}joined=true;document.querySelector('#room').value=result.room;car={x:track[0].x,y:track[0].y,angle:Math.atan2(track[1].y-track[0].y,track[1].x-track[0].x),speed:0};status(`Salon ${result.room} — partage ce code avec tes amis.`);});}
+    document.querySelector('#create').addEventListener('click',()=>{let code=document.querySelector('#room').value.trim();if(!code)code=Math.random().toString(36).slice(2,7).toUpperCase();document.querySelector('#room').value=code;enterRoom(code);});
+    document.querySelector('#join').addEventListener('click',()=>enterRoom(document.querySelector('#room').value));
+    document.querySelector('#room').addEventListener('keydown',e=>{if(e.key==='Enter')enterRoom(e.currentTarget.value);});
+    addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys[e.code]=true;});
+    addEventListener('keyup',e=>keys[e.code]=false);
+    document.querySelectorAll('.mobile button').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;b.setPointerCapture(e.pointerId);});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false));});
+    function drawCar(p, color, isMe=false){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.fillStyle='#0008';ctx.beginPath();ctx.roundRect(-27,-13,58,32,8);ctx.fill();ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(-30,-16,60,32,8);ctx.fill();ctx.fillStyle='#263a4d';ctx.beginPath();ctx.roundRect(-13,-12,23,24,5);ctx.fill();ctx.fillStyle='#ffe18a';ctx.fillRect(19,-11,7,6);ctx.fillRect(19,5,7,6);if(!isMe){ctx.rotate(-p.angle);ctx.fillStyle='white';ctx.font='bold 20px system-ui';ctx.textAlign='center';ctx.fillText(String(p.name||'Pilote').slice(0,14),0,-24);}ctx.restore();}
+    function frame(now){const dt=Math.min((now-lastFrame)/1000,.04);lastFrame=now;
+      if(joined){const steer=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);if(keys.ArrowUp||keys.KeyW)car.speed+=310*dt;if(keys.ArrowDown||keys.KeyS)car.speed-=430*dt;car.speed*=Math.pow(.986,dt*60);car.speed=Math.max(-90,Math.min(470,car.speed));car.angle+=steer*(.35+Math.min(Math.abs(car.speed)/260,1)*.85)*(car.speed>=0?1:-1)*dt;car.x+=Math.cos(car.angle)*car.speed*dt;car.y+=Math.sin(car.angle)*car.speed*dt;document.querySelector('#speed').textContent=Math.round(Math.abs(car.speed)*.42);if(now-lastSend>50){socket.emit('car:update',car);lastSend=now;}}
+      const W=innerWidth,H=innerHeight;ctx.clearRect(0,0,W,H);ctx.fillStyle='#78bd72';ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(W/2-car.x,H/2-car.y);
+      ctx.beginPath();track.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.lineWidth=174;ctx.strokeStyle='#e7d8b7';ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();ctx.lineWidth=150;ctx.strokeStyle='#343b40';ctx.stroke();ctx.setLineDash([22,22]);ctx.lineWidth=3;ctx.strokeStyle='#ffffff55';ctx.stroke();ctx.setLineDash([]);
+      for(const p of players.values()){if(p.id===socket.id)continue;drawCar(p,p.color||'#60c8ff');}drawCar(car,'#ff5d5d',true);ctx.restore();requestAnimationFrame(frame);}
+    requestAnimationFrame(frame);
+  })();
+  </script>
+</body>
+</html>
