@@ -9,22 +9,23 @@
     :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     * { box-sizing: border-box; }
     body { margin: 0; overflow: hidden; background: #10151e; color: #f5f7fb; }
-    canvas { display: block; width: 100vw; height: 100vh; }
+    #game { display: block; width: 100vw; height: 100vh; }
     .panel { position: fixed; z-index: 2; top: 20px; left: 20px; width: min(310px, calc(100vw - 40px)); padding: 18px; border: 1px solid #ffffff20; border-radius: 18px; background: #111923df; box-shadow: 0 16px 50px #0007; backdrop-filter: blur(12px); }
     .eyebrow { color: #88f0c2; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
     h1 { margin: 4px 0 14px; font-size: 27px; letter-spacing: -.04em; }
     label { display: block; margin: 12px 0 6px; color: #b7c1ce; font-size: 12px; font-weight: 700; }
     select, button { width: 100%; min-height: 42px; border: 1px solid #ffffff20; border-radius: 10px; background: #202b38; color: #f5f7fb; font: inherit; }
     select { padding: 0 11px; }
-    button { margin-top: 12px; border: 0; background: #70e6ae; color: #102017; font-weight: 850; cursor: pointer; transition: transform .15s, filter .15s; }
+    button { margin-top: 9px; border: 0; background: #70e6ae; color: #102017; font-weight: 850; cursor: pointer; transition: transform .15s, filter .15s; }
     button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    button.secondary { background: #293747; color: #f5f7fb; border: 1px solid #ffffff20; }
     .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 14px; }
     .stat { padding: 10px 11px; border-radius: 11px; background: #ffffff0b; }
     .stat small { display:block; color:#98a6b6; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
     .stat strong { display:block; margin-top:3px; font-size:18px; font-variant-numeric:tabular-nums; }
     .help { margin: 14px 0 0; color: #aeb9c7; font-size: 12px; line-height: 1.55; }
     .help b { color: #f5f7fb; }
-    .toast { position: fixed; z-index: 2; left: 50%; bottom: 28px; transform: translateX(-50%); padding: 11px 18px; border: 1px solid #ffffff20; border-radius: 999px; background: #111923df; color: #fff; font-size: 13px; font-weight: 750; opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; }
+    .toast { position: fixed; z-index: 7; left: 50%; bottom: 28px; transform: translateX(-50%); padding: 11px 18px; border: 1px solid #ffffff20; border-radius: 999px; background: #111923df; color:#fff; font-size:13px; font-weight:750; opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; }
     .toast.show { opacity: 1; }
     .mobile { display:none; position:fixed; z-index:3; right:18px; bottom:18px; gap:8px; }
     .mobile button { width:58px; height:58px; margin:0; border:1px solid #ffffff30; border-radius:16px; background:#111923cc; color:white; font-size:22px; touch-action:none; }
@@ -32,7 +33,22 @@
     .wind-arrow { width:38px; height:38px; display:grid; place-items:center; border-radius:50%; background:#70e6ae20; color:#70e6ae; font-size:23px; transition:transform .8s; }
     .wind-info small { display:block; color:#98a6b6; font-size:9px; font-weight:800; letter-spacing:.12em; }
     .wind-info strong { display:block; margin-top:2px; font-size:14px; }
-    @media (max-width: 600px) { .panel { top:10px; left:10px; width:220px; padding:13px; } h1 {font-size:22px; margin-bottom:8px;} .stats {gap:6px; margin-top:9px;} .stat {padding:7px;} .stat strong {font-size:15px;} .help {font-size:10px; margin-top:8px;} .panel label {margin-top:8px;} .panel select,.panel button {min-height:36px;} .mobile {display:flex;} .wind {right:10px;top:10px;min-width:145px;padding:8px 10px;} }
+    .editor { display:none; position:fixed; inset:0; z-index:4; background:#10151e; }
+    .editor.active { display:block; }
+    #drawCanvas { display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; }
+    .editor-tip { position:absolute; top:20px; left:50%; transform:translateX(-50%); padding:12px 18px; border:1px solid #ffffff25; border-radius:14px; background:#111923eF; text-align:center; font-size:14px; pointer-events:none; }
+    .editor-tip strong { color:#70e6ae; }
+    .editor-tools { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); display:flex; gap:8px; width:min(600px,calc(100% - 24px)); }
+    .editor-tools button { margin:0; min-width:110px; padding:0 12px; }
+    @media (max-width: 600px) {
+      .panel { top:10px; left:10px; width:220px; padding:13px; }
+      h1 {font-size:22px; margin-bottom:8px;} .stats {gap:6px; margin-top:9px;} .stat {padding:7px;} .stat strong {font-size:15px;}
+      .help {font-size:10px; margin-top:8px;} .panel label {margin-top:8px;} .panel select,.panel button {min-height:36px;font-size:12px;}
+      .mobile {display:flex;} .wind {right:10px;top:10px;min-width:145px;padding:8px 10px;}
+      .editor-tip { top:12px; width:calc(100% - 24px); font-size:12px; }
+      .editor-tools { bottom:12px; flex-wrap:wrap; justify-content:center; }
+      .editor-tools button { width:auto; min-width:calc(50% - 8px); min-height:42px; font-size:12px; }
+    }
   </style>
 </head>
 <body>
@@ -46,7 +62,8 @@
       <option value="desert">Désert — les lacets</option>
       <option value="loop">Looping — le huit infernal</option>
     </select>
-    <button id="restart">Recommencer la course</button>
+    <button id="drawTrack">✏️ Dessiner mon circuit</button>
+    <button class="secondary" id="restart">Recommencer la course</button>
     <div class="stats">
       <div class="stat"><small>Vitesse</small><strong><span id="speed">0</span> km/h</strong></div>
       <div class="stat"><small>Tour</small><strong><span id="lap">1</span> / 3</strong></div>
@@ -55,159 +72,91 @@
     </div>
     <p class="help"><b>Conduire :</b> ↑ / W accélérer · ↓ / S freiner · ← → / A D tourner<br>R pour recommencer. Le vent change régulièrement !</p>
   </section>
-  <div class="wind" aria-live="polite">
-    <div class="wind-arrow" id="windArrow">→</div>
-    <div class="wind-info"><small>VENT</small><strong><span id="windSpeed">0</span> km/h</strong></div>
-  </div>
+  <div class="wind" aria-live="polite"><div class="wind-arrow" id="windArrow">→</div><div class="wind-info"><small>VENT</small><strong><span id="windSpeed">0</span> km/h</strong></div></div>
   <div class="mobile" aria-label="Commandes tactiles">
-    <button data-key="ArrowLeft" aria-label="Tourner à gauche">◀</button>
-    <button data-key="ArrowUp" aria-label="Accélérer">▲</button>
-    <button data-key="ArrowDown" aria-label="Freiner">▼</button>
-    <button data-key="ArrowRight" aria-label="Tourner à droite">▶</button>
+    <button data-key="ArrowLeft" aria-label="Tourner à gauche">◀</button><button data-key="ArrowUp" aria-label="Accélérer">▲</button>
+    <button data-key="ArrowDown" aria-label="Freiner">▼</button><button data-key="ArrowRight" aria-label="Tourner à droite">▶</button>
+  </div>
+  <div class="editor" id="editor" aria-label="Éditeur de circuit">
+    <canvas id="drawCanvas"></canvas>
+    <div class="editor-tip"><strong>Dessine ton circuit !</strong><br>Trace une boucle fermée avec le doigt ou la souris. Relâche pour terminer le trait.</div>
+    <div class="editor-tools">
+      <button class="secondary" id="undoStroke">↶ Annuler trait</button>
+      <button class="secondary" id="clearTrack">Effacer</button>
+      <button class="secondary" id="cancelDraw">Annuler</button>
+      <button id="useTrack">Utiliser ce circuit</button>
+    </div>
   </div>
   <div class="toast" id="toast"></div>
 <script>
 (() => {
-  const canvas = document.querySelector('#game');
-  const ctx = canvas.getContext('2d');
-  const mapPicker = document.querySelector('#map');
-  const keyState = Object.create(null);
-  const TAU = Math.PI * 2;
-  const SEGMENTS = 900;
-  const maps = {
-    prairie: { name: 'Prairie', color: '#78bd72', road: '#343b40', w: 1050, h: 680, width: 150,
-      point: t => ({ x: 900 * Math.cos(t) + 115 * Math.cos(3*t), y: 540 * Math.sin(t) - 65 * Math.sin(2*t) }) },
-    desert: { name: 'Désert', color: '#d8a35d', road: '#514239', w: 920, h: 700, width: 145,
-      point: t => ({ x: 790 * Math.cos(t) + 130 * Math.cos(3*t), y: 565 * Math.sin(t) + 105 * Math.sin(3*t) }) },
-    loop: { name: 'Looping', color: '#525d9a', road: '#303444', w: 920, h: 720, width: 150,
-      point: t => ({ x: 720 * Math.cos(t) + 95 * Math.cos(5*t), y: 510 * Math.sin(t) - 115 * Math.sin(3*t) }) }
+  const canvas=document.querySelector('#game'), ctx=canvas.getContext('2d');
+  const drawCanvas=document.querySelector('#drawCanvas'), dctx=drawCanvas.getContext('2d');
+  const mapPicker=document.querySelector('#map'), editor=document.querySelector('#editor');
+  const keyState=Object.create(null), TAU=Math.PI*2, SEGMENTS=900;
+  const maps={
+    prairie:{name:'Prairie',color:'#78bd72',road:'#343b40',w:1050,h:680,width:150,point:t=>({x:900*Math.cos(t)+115*Math.cos(3*t),y:540*Math.sin(t)-65*Math.sin(2*t)})},
+    desert:{name:'Désert',color:'#d8a35d',road:'#514239',w:920,h:700,width:145,point:t=>({x:790*Math.cos(t)+130*Math.cos(3*t),y:565*Math.sin(t)+105*Math.sin(3*t)})},
+    loop:{name:'Looping',color:'#525d9a',road:'#303444',w:920,h:720,width:150,point:t=>({x:720*Math.cos(t)+95*Math.cos(5*t),y:510*Math.sin(t)-115*Math.sin(3*t)})}
   };
-  let track, car, cameraAngle = -Math.PI / 2, lastTime = 0, elapsed = 0, lap = 1, lastProgress = 0, toastTimer;
-  let windAngle = 0, windStrength = 30, nextWindChange = 18;
-  let bests = {};
-  try { bests = JSON.parse(localStorage.getItem('virage-bests') || '{}'); } catch (_) {}
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  function resize() { const dpr = Math.min(devicePixelRatio || 1, 2); canvas.width = innerWidth*dpr; canvas.height = innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
-  addEventListener('resize', resize); resize();
-  function makeTrack(id) { const def = maps[id]; const pts = Array.from({length: SEGMENTS}, (_,i) => def.point(i*TAU/SEGMENTS)); return { ...def, pts }; }
-  function randomWind() {
-    windAngle = Math.random()*TAU;
-    windStrength = 18 + Math.random()*38;
-    nextWindChange = elapsed + 18 + Math.random()*12;
-    document.querySelector('#windSpeed').textContent = Math.round(windStrength);
-    document.querySelector('#windArrow').style.transform = `rotate(${windAngle}rad)`;
+  let track,car,cameraAngle=-Math.PI/2,lastTime=0,elapsed=0,lap=1,lastProgress=0,toastTimer;
+  let windAngle=0,windStrength=30,nextWindChange=18,bests={},strokes=[],currentStroke=null;
+  const CUSTOM_KEY='virage-custom-track';
+  try { bests=JSON.parse(localStorage.getItem('virage-bests')||'{}'); } catch (_) {}
+  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  function resize(){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=innerWidth*dpr;canvas.height=innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);drawCanvas.width=innerWidth*dpr;drawCanvas.height=innerHeight*dpr;dctx.setTransform(dpr,0,0,dpr,0,0);if(editor.classList.contains('active'))renderEditor();}
+  addEventListener('resize',resize);resize();
+  function customDefinition(){try{return JSON.parse(localStorage.getItem(CUSTOM_KEY)||'null');}catch(_){return null;}}
+  function addCustomOption(){const custom=customDefinition();let option=mapPicker.querySelector('[value="custom"]');if(custom){if(!option){option=document.createElement('option');option.value='custom';mapPicker.append(option);}option.textContent='Mon circuit — personnalisé';}else option?.remove();}
+  function makeTrack(id){if(id==='custom'){const saved=customDefinition();if(saved?.points?.length>10)return {...saved,pts:saved.points};}const def=maps[id]||maps.prairie;return {...def,pts:Array.from({length:SEGMENTS},(_,i)=>def.point(i*TAU/SEGMENTS))};}
+  function randomWind(){windAngle=Math.random()*TAU;windStrength=18+Math.random()*38;nextWindChange=elapsed+18+Math.random()*12;document.querySelector('#windSpeed').textContent=Math.round(windStrength);document.querySelector('#windArrow').style.transform=`rotate(${windAngle}rad)`;}
+  function reset(){track=makeTrack(mapPicker.value);car={...track.pts[0],angle:Math.atan2(track.pts[1].y-track.pts[0].y,track.pts[1].x-track.pts[0].x),speed:0};cameraAngle=-Math.PI/2;elapsed=0;lap=1;lastProgress=0;lastTime=performance.now();randomWind();document.querySelector('#lap').textContent=lap;updateBest();showToast(`${track.name}: c'est parti !`);}
+  function updateBest(){const v=bests[mapPicker.value];document.querySelector('#best').textContent=v==null?'—':formatTime(v);}
+  function formatTime(s){const m=Math.floor(s/60),sec=(s%60).toFixed(1).padStart(4,'0');return `${String(m).padStart(2,'0')}:${sec}`;}
+  function showToast(text){const el=document.querySelector('#toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1800);}
+  function nearest(){let best=Infinity,index=0;for(let i=0;i<track.pts.length;i+=Math.max(1,Math.floor(track.pts.length/300))){const p=track.pts[i],dx=p.x-car.x,dy=p.y-car.y,d=dx*dx+dy*dy;if(d<best){best=d;index=i;}}return {index,distance:Math.sqrt(best)};}
+  function update(dt){
+    const accelerate=keyState.ArrowUp||keyState.KeyW,brake=keyState.ArrowDown||keyState.KeyS,left=keyState.ArrowLeft||keyState.KeyA,right=keyState.ArrowRight||keyState.KeyD;
+    const near=nearest(),onRoad=near.distance<track.width*.54,maxSpeed=onRoad?470:145;
+    if(accelerate)car.speed+=310*dt;if(brake)car.speed-=430*dt;car.speed*=Math.pow(onRoad?.986:.952,dt*60);car.speed=clamp(car.speed,-90,maxSpeed);
+    if(elapsed>=nextWindChange){randomWind();showToast(`Rafale de vent : ${Math.round(windStrength)} km/h`);}
+    const gust=windStrength*(.9+Math.sin(elapsed*1.7)*.1);car.angle+=steerForce(dt,gust,onRoad);car.x+=Math.cos(car.angle)*car.speed*dt;car.y+=Math.sin(car.angle)*car.speed*dt;
+    const crossWind=Math.sin(windAngle-car.angle),alongWind=Math.cos(windAngle-car.angle);car.x+=Math.cos(windAngle)*gust*crossWind*.075*dt;car.y+=Math.sin(windAngle)*gust*crossWind*.075*dt;car.speed*=1-Math.max(0,-alongWind)*gust*.00008*dt;
+    if(!onRoad&&near.distance>track.width*.95)car.speed*=.965;
+    const target=-car.angle-Math.PI/2;let delta=target-cameraAngle;while(delta>Math.PI)delta-=TAU;while(delta< -Math.PI)delta+=TAU;cameraAngle+=delta*Math.min(1,dt*5);
+    const next=nearest().index/track.pts.length;let progress=next-lastProgress;if(progress<-.5)progress+=1;if(progress>.5)progress-=1;
+    if(progress>0&&lastProgress>.88&&next<.12&&car.speed>30){lap++;if(lap>3){const finished=elapsed;if(bests[mapPicker.value]==null||finished<bests[mapPicker.value]){bests[mapPicker.value]=finished;try{localStorage.setItem('virage-bests',JSON.stringify(bests));}catch(_){}showToast(`Nouveau record : ${formatTime(finished)} !`);}else showToast(`Course terminée en ${formatTime(finished)} !`);updateBest();lap=3;car.speed=0;}else showToast(`Tour ${lap} / 3`);document.querySelector('#lap').textContent=lap;}
+    lastProgress=next;if(lap<=3)elapsed+=dt;document.querySelector('#speed').textContent=Math.round(Math.abs(car.speed)*.42);document.querySelector('#time').textContent=formatTime(elapsed);
+    function steerForce(frameDt,wind,road){const steer=(right?1:0)-(left?1:0),grip=.35+Math.min(Math.abs(car.speed)/260,1)*.85;return steer*grip*(car.speed>=0?1:-1)*frameDt+Math.sin(windAngle-car.angle)*wind*.00014*(road?1:1.8)*frameDt;}
   }
-  function reset() {
-    track = makeTrack(mapPicker.value); car = { ...track.pts[0], angle: Math.atan2(track.pts[1].y-track.pts[0].y, track.pts[1].x-track.pts[0].x), speed: 0 };
-    cameraAngle = -Math.PI / 2;
-    elapsed = 0; lap = 1; lastProgress = 0; lastTime = performance.now();
-    randomWind();
-    document.querySelector('#lap').textContent = lap; updateBest();
-    showToast(`${track.name} : c'est parti !`);
-  }
-  function updateBest() { const v = bests[mapPicker.value]; document.querySelector('#best').textContent = v == null ? '—' : formatTime(v); }
-  function formatTime(s) { const m = Math.floor(s/60), sec = (s%60).toFixed(1).padStart(4,'0'); return `${String(m).padStart(2,'0')}:${sec}`; }
-  function showToast(text) { const el=document.querySelector('#toast'); el.textContent=text; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1800); }
-  function nearest() { let best=Infinity, index=0; for (let i=0;i<SEGMENTS;i+=3) { const p=track.pts[i], dx=p.x-car.x, dy=p.y-car.y, d=dx*dx+dy*dy; if(d<best){best=d;index=i;} } return { index, distance: Math.sqrt(best) }; }
-  function update(dt) {
-    const accelerate = keyState.ArrowUp||keyState.KeyW;
-    const brake = keyState.ArrowDown||keyState.KeyS;
-    const left = keyState.ArrowLeft||keyState.KeyA;
-    const right = keyState.ArrowRight||keyState.KeyD;
-    const near=nearest(), onRoad=near.distance < track.width*.54;
-    const maxSpeed=onRoad?470:145;
-    if(accelerate) car.speed += 310*dt;
-    if(brake) car.speed -= 430*dt;
-    car.speed *= Math.pow(onRoad ? 0.986 : 0.952, dt*60);
-    car.speed=clamp(car.speed, -90, maxSpeed);
-
-    if(elapsed >= nextWindChange) { randomWind(); showToast(`Rafale de vent : ${Math.round(windStrength)} km/h`); }
-
-    const gust = windStrength * (0.9 + Math.sin(elapsed*1.7)*0.1);
-    car.angle += steerForce(dt, gust, onRoad);
-    car.x += Math.cos(car.angle)*car.speed*dt;
-    car.y += Math.sin(car.angle)*car.speed*dt;
-
-    // Wind pushes sideways relative to the car heading.
-    const crossWind = Math.sin(windAngle-car.angle);
-    const alongWind = Math.cos(windAngle-car.angle);
-    car.x += Math.cos(windAngle)*gust*crossWind*0.075*dt;
-    car.y += Math.sin(windAngle)*gust*crossWind*0.075*dt;
-    car.speed *= 1 - Math.max(0, -alongWind) * gust * 0.00008 * dt;
-
-    if(!onRoad && near.distance>track.width*.95) { car.speed*=.965; }
-
-    const cameraTarget = -car.angle - Math.PI / 2;
-    let cameraDelta = cameraTarget - cameraAngle;
-    while (cameraDelta > Math.PI) cameraDelta -= TAU;
-    while (cameraDelta < -Math.PI) cameraDelta += TAU;
-    cameraAngle += cameraDelta * Math.min(1, dt * 5);
-
-    const next=nearest().index/SEGMENTS;
-    let delta=next-lastProgress;
-    if(delta < -0.5) delta += 1;
-    if(delta > 0.5) delta -= 1;
-    if(delta > 0 && lastProgress > .88 && next < .12 && car.speed>30) {
-      lap++;
-      if(lap>3) {
-        const finished=elapsed;
-        if(bests[mapPicker.value]==null || finished<bests[mapPicker.value]) { bests[mapPicker.value]=finished; try{localStorage.setItem('virage-bests',JSON.stringify(bests));}catch(_){} showToast(`Nouveau record : ${formatTime(finished)} !`); }
-        else showToast(`Course terminée en ${formatTime(finished)} !`);
-        updateBest(); lap=3; car.speed=0;
-      } else showToast(`Tour ${lap} / 3`);
-      document.querySelector('#lap').textContent=lap;
-    }
-    lastProgress=next;
-    if(lap<=3) elapsed+=dt;
-    document.querySelector('#speed').textContent=Math.round(Math.abs(car.speed)*.42);
-    document.querySelector('#time').textContent=formatTime(elapsed);
-
-    function steerForce(frameDt, wind, road) {
-      const steer=(right?1:0)-(left?1:0);
-      const grip=0.35+Math.min(Math.abs(car.speed)/260,1)*0.85;
-      const steering=steer*grip*(car.speed>=0?1:-1)*frameDt;
-      const windDrift=Math.sin(windAngle-car.angle)*wind*0.00014*(road?1:1.8)*frameDt;
-      return steering+windDrift;
-    }
-  }
-  function draw() {
-    const W=innerWidth,H=innerHeight;
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle=track.color; ctx.fillRect(0,0,W,H);
-    ctx.save(); ctx.translate(W/2,H/2); ctx.rotate(cameraAngle); ctx.translate(-car.x,-car.y);
-
-    ctx.globalAlpha=.13; ctx.fillStyle='#fff';
-    for(let i=0;i<95;i++){ const x=((i*317+83)%(track.w*2))-track.w, y=((i*197+47)%(track.h*2))-track.h; ctx.beginPath();ctx.arc(x,y,(i%3)+2,0,TAU);ctx.fill(); }
-    ctx.globalAlpha=1;
+  function draw(){const W=innerWidth,H=innerHeight;ctx.clearRect(0,0,W,H);ctx.fillStyle=track.color;ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(W/2,H/2);ctx.rotate(cameraAngle);ctx.translate(-car.x,-car.y);
+    ctx.globalAlpha=.13;ctx.fillStyle='#fff';for(let i=0;i<95;i++){const x=((i*317+83)%(track.w*2))-track.w,y=((i*197+47)%(track.h*2))-track.h;ctx.beginPath();ctx.arc(x,y,(i%3)+2,0,TAU);ctx.fill();}ctx.globalAlpha=1;
     const path=()=>{ctx.beginPath();track.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();};
-    path(); ctx.lineWidth=track.width+24;ctx.strokeStyle='#e7d8b7';ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
-    path(); ctx.lineWidth=track.width;ctx.strokeStyle=track.road;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
-    path(); ctx.setLineDash([22,22]);ctx.lineWidth=3;ctx.strokeStyle='#ffffff55';ctx.stroke();ctx.setLineDash([]);
-
-    const p0=track.pts[0], p1=track.pts[1], a=Math.atan2(p1.y-p0.y,p1.x-p0.x);
-    ctx.save();ctx.translate(p0.x,p0.y);ctx.rotate(a+Math.PI/2);
-    for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#20252b':'#f6f7f8';ctx.fillRect(-track.width/2+i*track.width/8,-9,track.width/8+1,18);}ctx.restore();
-
-    ctx.save();ctx.translate(car.x,car.y);ctx.rotate(car.angle);
-    ctx.fillStyle='#0007';ctx.beginPath();ctx.roundRect(-27,-13,58,32,8);ctx.fill();
-    ctx.fillStyle='#ff5d5d';ctx.beginPath();ctx.roundRect(-30,-16,60,32,8);ctx.fill();
-    ctx.fillStyle='#ffe18a';ctx.fillRect(19,-11,7,6);ctx.fillRect(19,5,7,6);
-    ctx.fillStyle='#263a4d';ctx.beginPath();ctx.roundRect(-13,-12,23,24,5);ctx.fill();
-    ctx.fillStyle='#91d8ef';ctx.fillRect(-10,-10,8,20);ctx.restore();ctx.restore();
-
-    const mw=Math.min(170,W*.29), mh=mw*.68, mx=W-mw-20, my=20;
-    ctx.fillStyle='#101923d9';ctx.beginPath();ctx.roundRect(mx,my,mw,mh,12);ctx.fill();
-    const sx=(mw-20)/(track.w*2.35), sy=(mh-20)/(track.h*2.35), scale=Math.min(sx,sy);
-    ctx.save();ctx.translate(mx+mw/2,my+mh/2);ctx.scale(scale,scale);
-    ctx.beginPath();track.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.lineWidth=track.width;ctx.strokeStyle='#66717b';ctx.stroke();
-    ctx.fillStyle='#ff6666';ctx.beginPath();ctx.arc(car.x,car.y,17,0,TAU);ctx.fill();ctx.restore();
+    path();ctx.lineWidth=track.width+24;ctx.strokeStyle='#e7d8b7';ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();path();ctx.lineWidth=track.width;ctx.strokeStyle=track.road;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();path();ctx.setLineDash([22,22]);ctx.lineWidth=3;ctx.strokeStyle='#ffffff55';ctx.stroke();ctx.setLineDash([]);
+    const p0=track.pts[0],p1=track.pts[1],a=Math.atan2(p1.y-p0.y,p1.x-p0.x);ctx.save();ctx.translate(p0.x,p0.y);ctx.rotate(a+Math.PI/2);for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#20252b':'#f6f7f8';ctx.fillRect(-track.width/2+i*track.width/8,-9,track.width/8+1,18);}ctx.restore();
+    ctx.save();ctx.translate(car.x,car.y);ctx.rotate(car.angle);ctx.fillStyle='#0007';ctx.beginPath();ctx.roundRect(-27,-13,58,32,8);ctx.fill();ctx.fillStyle='#ff5d5d';ctx.beginPath();ctx.roundRect(-30,-16,60,32,8);ctx.fill();ctx.fillStyle='#ffe18a';ctx.fillRect(19,-11,7,6);ctx.fillRect(19,5,7,6);ctx.fillStyle='#263a4d';ctx.beginPath();ctx.roundRect(-13,-12,23,24,5);ctx.fill();ctx.fillStyle='#91d8ef';ctx.fillRect(-10,-10,8,20);ctx.restore();ctx.restore();
+    const mw=Math.min(170,W*.29),mh=mw*.68,mx=W-mw-20,my=20;ctx.fillStyle='#101923d9';ctx.beginPath();ctx.roundRect(mx,my,mw,mh,12);ctx.fill();const scale=Math.min((mw-20)/(track.w*2.35),(mh-20)/(track.h*2.35));ctx.save();ctx.translate(mx+mw/2,my+mh/2);ctx.scale(scale,scale);ctx.beginPath();track.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.lineWidth=track.width;ctx.strokeStyle='#66717b';ctx.stroke();ctx.fillStyle='#ff6666';ctx.beginPath();ctx.arc(car.x,car.y,17,0,TAU);ctx.fill();ctx.restore();
   }
-  function frame(now) { const dt=Math.min((now-lastTime)/1000,.04);lastTime=now;update(dt);draw();requestAnimationFrame(frame); }
-  addEventListener('keydown',e=>{ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keyState[e.code]=true;if(e.code==='KeyR')reset(); });
+  function frame(now){const dt=Math.min((now-lastTime)/1000,.04);lastTime=now;if(!editor.classList.contains('active')){update(dt);draw();}requestAnimationFrame(frame);}
+  function editorPoint(e){const r=drawCanvas.getBoundingClientRect(),margin=26;return {x:clamp((e.clientX-r.left-margin)/(r.width-2*margin),0,1),y:clamp((e.clientY-r.top-margin)/(r.height-2*margin),0,1)};}
+  function renderEditor(){const w=innerWidth,h=innerHeight;dctx.clearRect(0,0,w,h);dctx.fillStyle='#78bd72';dctx.fillRect(0,0,w,h);const pad=26;dctx.strokeStyle='#ffffff18';dctx.lineWidth=1;for(let x=pad;x<w;x+=40){dctx.beginPath();dctx.moveTo(x,pad);dctx.lineTo(x,h-pad);dctx.stroke();}for(let y=pad;y<h;y+=40){dctx.beginPath();dctx.moveTo(pad,y);dctx.lineTo(w-pad,y);dctx.stroke();}
+    const px=p=>({x:pad+p.x*(w-2*pad),y:pad+p.y*(h-2*pad)});for(const line of [...strokes,...(currentStroke?[currentStroke]:[])]){if(line.length<2)continue;dctx.beginPath();line.forEach((p,i)=>{const q=px(p);i?dctx.lineTo(q.x,q.y):dctx.moveTo(q.x,q.y);});dctx.strokeStyle='#e7d8b7';dctx.lineWidth=42;dctx.lineCap='round';dctx.lineJoin='round';dctx.stroke();dctx.strokeStyle='#343b40';dctx.lineWidth=34;dctx.stroke();}
+  }
+  function openEditor(){strokes=[];currentStroke=null;editor.classList.add('active');renderEditor();}
+  drawCanvas.addEventListener('pointerdown',e=>{if(!editor.classList.contains('active'))return;e.preventDefault();currentStroke=[editorPoint(e)];drawCanvas.setPointerCapture(e.pointerId);renderEditor();});
+  drawCanvas.addEventListener('pointermove',e=>{if(!currentStroke)return;const p=editorPoint(e),last=currentStroke[currentStroke.length-1];if(Math.hypot((p.x-last.x)*innerWidth,(p.y-last.y)*innerHeight)>3){currentStroke.push(p);renderEditor();}});
+  function endStroke(){if(currentStroke?.length>1)strokes.push(currentStroke);currentStroke=null;renderEditor();}drawCanvas.addEventListener('pointerup',endStroke);drawCanvas.addEventListener('pointercancel',endStroke);
+  function smoothLoop(points){let pts=points.slice();for(let pass=0;pass<2;pass++){const next=[];for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];next.push({x:a.x*.75+b.x*.25,y:a.y*.75+b.y*.25},{x:a.x*.25+b.x*.75,y:a.y*.25+b.y*.75});}pts=next;}return pts;}
+  function buildCustomTrack(){const raw=strokes.flat();if(raw.length<15){showToast('Dessine un circuit un peu plus long avant de le valider.');return null;}const smooth=smoothLoop(raw),world=smooth.map(p=>({x:(p.x-.5)*1800,y:(p.y-.5)*1300}));const lengths=[],total=0;let distance=0;for(let i=0;i<world.length;i++){const a=world[i],b=world[(i+1)%world.length],len=Math.hypot(b.x-a.x,b.y-a.y);lengths.push(len);distance+=len;}const pts=[];let seg=0,walked=0;for(let i=0;i<SEGMENTS;i++){const target=distance*i/SEGMENTS;while(seg<lengths.length-1&&walked+lengths[seg]<target){walked+=lengths[seg++];}const a=world[seg],b=world[(seg+1)%world.length],f=lengths[seg]?(target-walked)/lengths[seg]:0;pts.push({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});}return {name:'Mon circuit',color:'#78bd72',road:'#343b40',w:900,h:650,width:140,points:pts};}
+  document.querySelector('#drawTrack').addEventListener('click',openEditor);
+  document.querySelector('#undoStroke').addEventListener('click',()=>{strokes.pop();renderEditor();});
+  document.querySelector('#clearTrack').addEventListener('click',()=>{strokes=[];currentStroke=null;renderEditor();});
+  document.querySelector('#cancelDraw').addEventListener('click',()=>editor.classList.remove('active'));
+  document.querySelector('#useTrack').addEventListener('click',()=>{const custom=buildCustomTrack();if(!custom)return;try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(custom));}catch(_){showToast('Impossible de sauvegarder le circuit sur cet appareil.');return;}addCustomOption();mapPicker.value='custom';editor.classList.remove('active');reset();});
+  addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keyState[e.code]=true;if(e.code==='KeyR'&&!editor.classList.contains('active'))reset();});
   addEventListener('keyup',e=>keyState[e.code]=false);
   document.querySelectorAll('.mobile button').forEach(btn=>{const code=btn.dataset.key;btn.addEventListener('pointerdown',e=>{e.preventDefault();keyState[code]=true;btn.setPointerCapture(e.pointerId);});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>btn.addEventListener(ev,()=>keyState[code]=false));});
-  mapPicker.addEventListener('change',reset);document.querySelector('#restart').addEventListener('click',reset);
-  reset();requestAnimationFrame(frame);
+  addCustomOption();mapPicker.addEventListener('change',reset);document.querySelector('#restart').addEventListener('click',reset);reset();requestAnimationFrame(frame);
 })();
 </script>
 </body>
