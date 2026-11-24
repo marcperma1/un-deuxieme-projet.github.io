@@ -28,7 +28,11 @@
     .toast.show { opacity: 1; }
     .mobile { display:none; position:fixed; z-index:3; right:18px; bottom:18px; gap:8px; }
     .mobile button { width:58px; height:58px; margin:0; border:1px solid #ffffff30; border-radius:16px; background:#111923cc; color:white; font-size:22px; touch-action:none; }
-    @media (max-width: 600px) { .panel { top:10px; left:10px; width:220px; padding:13px; } h1 {font-size:22px; margin-bottom:8px;} .stats {gap:6px; margin-top:9px;} .stat {padding:7px;} .stat strong {font-size:15px;} .help {font-size:10px; margin-top:8px;} .panel label {margin-top:8px;} .panel select,.panel button {min-height:36px;} .mobile {display:flex;} }
+    .wind { position:fixed; z-index:2; right:20px; top:20px; display:flex; align-items:center; gap:10px; min-width:160px; padding:11px 14px; border:1px solid #ffffff20; border-radius:14px; background:#111923df; backdrop-filter:blur(12px); }
+    .wind-arrow { width:38px; height:38px; display:grid; place-items:center; border-radius:50%; background:#70e6ae20; color:#70e6ae; font-size:23px; transition:transform .8s; }
+    .wind-info small { display:block; color:#98a6b6; font-size:9px; font-weight:800; letter-spacing:.12em; }
+    .wind-info strong { display:block; margin-top:2px; font-size:14px; }
+    @media (max-width: 600px) { .panel { top:10px; left:10px; width:220px; padding:13px; } h1 {font-size:22px; margin-bottom:8px;} .stats {gap:6px; margin-top:9px;} .stat {padding:7px;} .stat strong {font-size:15px;} .help {font-size:10px; margin-top:8px;} .panel label {margin-top:8px;} .panel select,.panel button {min-height:36px;} .mobile {display:flex;} .wind {right:10px;top:10px;min-width:145px;padding:8px 10px;} }
   </style>
 </head>
 <body>
@@ -49,8 +53,12 @@
       <div class="stat"><small>Chrono</small><strong id="time">00:00.0</strong></div>
       <div class="stat"><small>Record</small><strong id="best">—</strong></div>
     </div>
-    <p class="help"><b>Conduire :</b> ↑ / W accélérer · ↓ / S freiner · ← → / A D tourner<br>R pour recommencer. La voiture reste orientée vers le nord et la caméra la suit !</p>
+    <p class="help"><b>Conduire :</b> ↑ / W accélérer · ↓ / S freiner · ← → / A D tourner<br>R pour recommencer. Le vent change régulièrement !</p>
   </section>
+  <div class="wind" aria-live="polite">
+    <div class="wind-arrow" id="windArrow">→</div>
+    <div class="wind-info"><small>VENT</small><strong><span id="windSpeed">0</span> km/h</strong></div>
+  </div>
   <div class="mobile" aria-label="Commandes tactiles">
     <button data-key="ArrowLeft" aria-label="Tourner à gauche">◀</button>
     <button data-key="ArrowUp" aria-label="Accélérer">▲</button>
@@ -75,31 +83,32 @@
       point: t => ({ x: 720 * Math.cos(t) + 95 * Math.cos(5*t), y: 510 * Math.sin(t) - 115 * Math.sin(3*t) }) }
   };
   let track, car, cameraAngle = -Math.PI / 2, lastTime = 0, elapsed = 0, lap = 1, lastProgress = 0, toastTimer;
+  let windAngle = 0, windStrength = 30, nextWindChange = 18;
   let bests = {};
   try { bests = JSON.parse(localStorage.getItem('virage-bests') || '{}'); } catch (_) {}
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   function resize() { const dpr = Math.min(devicePixelRatio || 1, 2); canvas.width = innerWidth*dpr; canvas.height = innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
   addEventListener('resize', resize); resize();
-  function makeTrack(id) {
-    const def = maps[id];
-    const pts = Array.from({length: SEGMENTS}, (_,i) => def.point(i*TAU/SEGMENTS));
-    return { ...def, pts };
+  function makeTrack(id) { const def = maps[id]; const pts = Array.from({length: SEGMENTS}, (_,i) => def.point(i*TAU/SEGMENTS)); return { ...def, pts }; }
+  function randomWind() {
+    windAngle = Math.random()*TAU;
+    windStrength = 18 + Math.random()*38;
+    nextWindChange = elapsed + 18 + Math.random()*12;
+    document.querySelector('#windSpeed').textContent = Math.round(windStrength);
+    document.querySelector('#windArrow').style.transform = `rotate(${windAngle}rad)`;
   }
   function reset() {
     track = makeTrack(mapPicker.value); car = { ...track.pts[0], angle: Math.atan2(track.pts[1].y-track.pts[0].y, track.pts[1].x-track.pts[0].x), speed: 0 };
     cameraAngle = -Math.PI / 2;
     elapsed = 0; lap = 1; lastProgress = 0; lastTime = performance.now();
+    randomWind();
     document.querySelector('#lap').textContent = lap; updateBest();
     showToast(`${track.name} : c'est parti !`);
   }
   function updateBest() { const v = bests[mapPicker.value]; document.querySelector('#best').textContent = v == null ? '—' : formatTime(v); }
   function formatTime(s) { const m = Math.floor(s/60), sec = (s%60).toFixed(1).padStart(4,'0'); return `${String(m).padStart(2,'0')}:${sec}`; }
   function showToast(text) { const el=document.querySelector('#toast'); el.textContent=text; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1800); }
-  function nearest() {
-    let best=Infinity, index=0;
-    for (let i=0;i<SEGMENTS;i+=3) { const p=track.pts[i], dx=p.x-car.x, dy=p.y-car.y, d=dx*dx+dy*dy; if(d<best){best=d;index=i;} }
-    return { index, distance: Math.sqrt(best) };
-  }
+  function nearest() { let best=Infinity, index=0; for (let i=0;i<SEGMENTS;i+=3) { const p=track.pts[i], dx=p.x-car.x, dy=p.y-car.y, d=dx*dx+dy*dy; if(d<best){best=d;index=i;} } return { index, distance: Math.sqrt(best) }; }
   function update(dt) {
     const accelerate = keyState.ArrowUp||keyState.KeyW;
     const brake = keyState.ArrowDown||keyState.KeyS;
@@ -111,14 +120,23 @@
     if(brake) car.speed -= 430*dt;
     car.speed *= Math.pow(onRoad ? 0.986 : 0.952, dt*60);
     car.speed=clamp(car.speed, -90, maxSpeed);
-    const steer=(right?1:0)-(left?1:0);
-    const grip=0.35+Math.min(Math.abs(car.speed)/260,1)*0.85;
-    car.angle += steer*grip*(car.speed>=0?1:-1)*dt;
+
+    if(elapsed >= nextWindChange) { randomWind(); showToast(`Rafale de vent : ${Math.round(windStrength)} km/h`); }
+
+    const gust = windStrength * (0.9 + Math.sin(elapsed*1.7)*0.1);
+    car.angle += steerForce(dt, gust, onRoad);
     car.x += Math.cos(car.angle)*car.speed*dt;
     car.y += Math.sin(car.angle)*car.speed*dt;
+
+    // Wind pushes sideways relative to the car heading.
+    const crossWind = Math.sin(windAngle-car.angle);
+    const alongWind = Math.cos(windAngle-car.angle);
+    car.x += Math.cos(windAngle)*gust*crossWind*0.075*dt;
+    car.y += Math.sin(windAngle)*gust*crossWind*0.075*dt;
+    car.speed *= 1 - Math.max(0, -alongWind) * gust * 0.00008 * dt;
+
     if(!onRoad && near.distance>track.width*.95) { car.speed*=.965; }
 
-    // Rotate the view smoothly so the car always points toward the top of the screen.
     const cameraTarget = -car.angle - Math.PI / 2;
     let cameraDelta = cameraTarget - cameraAngle;
     while (cameraDelta > Math.PI) cameraDelta -= TAU;
@@ -143,15 +161,20 @@
     if(lap<=3) elapsed+=dt;
     document.querySelector('#speed').textContent=Math.round(Math.abs(car.speed)*.42);
     document.querySelector('#time').textContent=formatTime(elapsed);
+
+    function steerForce(frameDt, wind, road) {
+      const steer=(right?1:0)-(left?1:0);
+      const grip=0.35+Math.min(Math.abs(car.speed)/260,1)*0.85;
+      const steering=steer*grip*(car.speed>=0?1:-1)*frameDt;
+      const windDrift=Math.sin(windAngle-car.angle)*wind*0.00014*(road?1:1.8)*frameDt;
+      return steering+windDrift;
+    }
   }
   function draw() {
     const W=innerWidth,H=innerHeight;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=track.color; ctx.fillRect(0,0,W,H);
-    ctx.save();
-    ctx.translate(W/2,H/2);
-    ctx.rotate(cameraAngle);
-    ctx.translate(-car.x,-car.y);
+    ctx.save(); ctx.translate(W/2,H/2); ctx.rotate(cameraAngle); ctx.translate(-car.x,-car.y);
 
     ctx.globalAlpha=.13; ctx.fillStyle='#fff';
     for(let i=0;i<95;i++){ const x=((i*317+83)%(track.w*2))-track.w, y=((i*197+47)%(track.h*2))-track.h; ctx.beginPath();ctx.arc(x,y,(i%3)+2,0,TAU);ctx.fill(); }
@@ -170,8 +193,7 @@
     ctx.fillStyle='#ff5d5d';ctx.beginPath();ctx.roundRect(-30,-16,60,32,8);ctx.fill();
     ctx.fillStyle='#ffe18a';ctx.fillRect(19,-11,7,6);ctx.fillRect(19,5,7,6);
     ctx.fillStyle='#263a4d';ctx.beginPath();ctx.roundRect(-13,-12,23,24,5);ctx.fill();
-    ctx.fillStyle='#91d8ef';ctx.fillRect(-10,-10,8,20);ctx.restore();
-    ctx.restore();
+    ctx.fillStyle='#91d8ef';ctx.fillRect(-10,-10,8,20);ctx.restore();ctx.restore();
 
     const mw=Math.min(170,W*.29), mh=mw*.68, mx=W-mw-20, my=20;
     ctx.fillStyle='#101923d9';ctx.beginPath();ctx.roundRect(mx,my,mw,mh,12);ctx.fill();
